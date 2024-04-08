@@ -220,4 +220,27 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=7),
 }
 
-# endregion
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.mail.ru'
+EMAIL_PORT = 465
+EMAIL_HOST_USER = 'code-pet-spam@mail.ru'
+EMAIL_HOST_PASSWORD = 'DNsMzhDvVgAKWV4b9qUB'
+EMAIL_USE_SSL = True
+
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+SERVER_EMAIL = EMAIL_HOST_USER
+EMAIL_ADMIN = EMAIL_HOST_USER
+
+
+BROKER_URL = env.str('BROKER_URL')
+CELERY_BROKER_URL = BROKER_URL
+
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+
+CACHES = {
+    'default': {
+        "BACKEND": 'django.core.cache.backends.redis.RedisCache',
+        "LOCATION": env.str('REDIS_HOST'),
+    }
+}
+

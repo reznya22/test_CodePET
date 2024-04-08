@@ -1,8 +1,7 @@
 import datetime
-
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.db import models
-from django.core.validators import MaxValueValidator, MinValueValidator
 
 User = get_user_model()
 
@@ -10,7 +9,6 @@ User = get_user_model()
 class Payment(models.Model):
     amount = models.PositiveBigIntegerField(
         verbose_name='Сумма платежа',
-        null=True
     )
     user = models.ForeignKey(
         to=User,
@@ -34,6 +32,10 @@ class Payment(models.Model):
 
     def __str__(self):
         return f"{self.amount} ({self.payment_date})"
+
+    def save(self, *args, **kwargs):
+        cache.delete('collects')
+        return super().save(*args, **kwargs)
 
 
 class Reason(models.Model):
@@ -96,3 +98,7 @@ class Collect(models.Model):
 
     def __str__(self):
         return f"{self.author} {self.title}"
+
+    def save(self, *args, **kwargs):
+        cache.delete('collects')
+        return super().save(*args, **kwargs)
