@@ -85,7 +85,8 @@ class Collect(models.Model):
     )
     image = models.ImageField(
         verbose_name='Обложка',
-        upload_to='%Y/%m/%d'
+        upload_to='%Y/%m/%d',
+        null=True,
     )
     deadline = models.DateTimeField(
         verbose_name='Дата завершения сбора',

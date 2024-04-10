@@ -126,6 +126,8 @@ REST_FRAMEWORK = {
         'rest_framework.parsers.FileUploadParser',
     ],
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_PAGINATION_CLASS': 'service.pagination.BasePagination',
+    'PAGE_SIZE': 6,
 }
 
 # endregion
@@ -159,7 +161,7 @@ SPECTACULAR_SETTINGS = {
     'VERSION': '1.0.0',
 
     'SERVE_PERMISSIONS': [
-        'rest_framework.permissions.IsAuthenticated',
+        'rest_framework.permissions.AllowAny',
     ],
 
     'SERVE_AUTHENTICATION': [

@@ -1,11 +1,13 @@
 from drf_spectacular.utils import extend_schema_view, extend_schema
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from collect_service.services import get_collects_cache
 from service.permissions import IsAuthorOrStaff
 from django.contrib.auth import get_user_model
+
+from service.pagination import BasePagination
 from service.tasks import send_to_email
 from rest_framework import generics
-from service.models import Collect
 from service.serializers import *
 from django.db.models import F
 
@@ -19,7 +21,12 @@ User = get_user_model()
 class ListCreateCollectAPIView(generics.ListCreateAPIView):
     """Get all collects"""
     serializer_class = CollectSerializer
-    permission_classes = [IsAuthenticated,]
+    pagination_class = BasePagination
+
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [IsAuthenticated()]
+        return super().get_permissions()
 
     def get_queryset(self):
         queryset = get_collects_cache()
@@ -27,10 +34,13 @@ class ListCreateCollectAPIView(generics.ListCreateAPIView):
 
     def create(self, request, *args, **kwargs):
         self.kwargs['author'] = self.request.user
+
         if self.request.user.email:
             username = self.request.user.username
-            send_to_email.delay(message=f'Hi {username}, your collect is successful created',
-                                recipient_list=self.request.user.email)
+            send_to_email.delay(
+                message=f'Hi {username}, your collect is successful created',
+                recipient_list=self.request.user.email
+            )
         return super().create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
@@ -46,7 +56,11 @@ class ListCreateCollectAPIView(generics.ListCreateAPIView):
 class CollectAPIView(generics.RetrieveUpdateDestroyAPIView):
     """Get/delete/update one collect"""
     serializer_class = CollectSerializer
-    permission_classes = [IsAuthorOrStaff,]
+
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [AllowAny()]
+        return [IsAuthorOrStaff(),]
 
     def get_queryset(self):
         # redis-cache
@@ -67,15 +81,19 @@ class PaymentCreateAPIView(generics.CreateAPIView):
                                             payments__user=user,
                                             id=request.data.get('collect'))
         collect = Collect.objects.filter(id=request.data.get('collect'))
+
         if not payment_in_collect:
             collect.update(users_count=F('users_count') + 1)
 
         collect.update(
             current_amount=F('current_amount') + request.data.get('amount'))
+
         if self.request.user.email:
             username = self.request.user.username
-            send_to_email.delay(message=f'Hi {username}, your payment is successful created',
-                                recipient_list=self.request.user.email)
+            send_to_email.delay(
+                message=f'Hi {username}, your payment is successful created',
+                recipient_list=self.request.user.email
+            )
         return super().create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
